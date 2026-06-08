@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Love Puzzle ❤️</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #111827;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 2rem;
+        }
+
+        p {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #d1d5db;
+        }
+
+        #controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 10px;
+            background: #ec4899;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        #puzzle-container {
+            width: 95vw;
+            max-width: 420px;
+            aspect-ratio: 3/4;
+            display: grid;
+            border: 4px solid white;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #1f2937;
+            touch-action: none;
+        }
+
+        .piece {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background-image: url('./wife.jpeg');
+            background-size: 420px 560px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .piece.correct {
+            border: none;
+        }
+
+        #message {
+            margin-top: 20px;
+            font-size: 1.3rem;
+            color: #f9a8d4;
+            display: none;
+            text-align: center;
+        }
+
+        @media(max-width:500px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            button {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>❤️ Complete Our Puzzle ❤️</h1>
+    <p>Arrange the pieces to complete the photo</p>
+
+    <div id="controls">
+        <button onclick="shufflePuzzle()">Shuffle</button>
+    </div>
+
+    <div id="puzzle-container"></div>
+
+    <div id="message">
+        🎉 You completed the puzzle ❤️
+    </div>
+
+    <script>
+
+        const puzzle = document.getElementById("puzzle-container");
+        const message = document.getElementById("message");
+
+        const rows = 5;
+        const cols = 4;
+
+        let pieces = [];
+        let draggedPiece = null;
+
+        puzzle.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        puzzle.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
+        function createPuzzle() {
+
+            pieces = [];
+
+            for (let i = 0; i < rows * cols; i++) {
+
+                const piece = document.createElement("div");
+                piece.classList.add("piece");
+
+                piece.draggable = true;
+
+                const x = (i % cols) * 100 / (cols - 1);
+                const y = Math.floor(i / cols) * 100 / (rows - 1);
+
+                piece.style.backgroundPosition = `${x}% ${y}%`;
+
+                piece.dataset.correct = i;
+                piece.dataset.current = i;
+
+                addDragEvents(piece);
+
+                pieces.push(piece);
+            }
+
+            shuffleArray(pieces);
+
+            renderPuzzle();
+        }
+
+        function renderPuzzle() {
+
+            puzzle.innerHTML = "";
+
+            pieces.forEach((piece, index) => {
+                piece.dataset.current = index;
+                puzzle.appendChild(piece);
+            });
+
+            checkWin();
+        }
+
+        function addDragEvents(piece) {
+
+            piece.addEventListener("dragstart", () => {
+                draggedPiece = piece;
+            });
+
+            piece.addEventListener("dragover", (e) => {
+                e.preventDefault();
+            });
+
+            piece.addEventListener("drop", () => {
+
+                if (draggedPiece === piece) return;
+
+                const draggedIndex = pieces.indexOf(draggedPiece);
+                const targetIndex = pieces.indexOf(piece);
+
+                [pieces[draggedIndex], pieces[targetIndex]] =
+                    [pieces[targetIndex], pieces[draggedIndex]];
+
+                renderPuzzle();
+            });
+
+            // Mobile touch support
+
+            let touchedPiece = null;
+
+            piece.addEventListener("touchstart", () => {
+                touchedPiece = piece;
+            });
+
+            piece.addEventListener("touchend", () => {
+
+                if (!touchedPiece || touchedPiece === piece) return;
+
+                const touchedIndex = pieces.indexOf(touchedPiece);
+                const targetIndex = pieces.indexOf(piece);
+
+                [pieces[touchedIndex], pieces[targetIndex]] =
+                    [pieces[targetIndex], pieces[touchedIndex]];
+
+                renderPuzzle();
+            });
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function shufflePuzzle() {
+            shuffleArray(pieces);
+            renderPuzzle();
+            message.style.display = "none";
+        }
+
+        function checkWin() {
+
+            let won = true;
+
+            pieces.forEach((piece, index) => {
+
+                if (Number(piece.dataset.correct) !== index) {
+                    won = false;
+                }
+            });
+
+            if (won) {
+                message.style.display = "block";
+                navigator.vibrate?.(200);
+            }
+        }
+
+        createPuzzle();
+
+    </script>
+
+</body>
+
+</html>
